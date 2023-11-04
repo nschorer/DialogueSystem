@@ -89,6 +89,8 @@ protected:
 	bool HideDialogueBox(UUIDialogueBox* DialogueBox, bool bForce = false);
 	bool HideAllDialogueBoxes(bool bForce = false);
 
+	void CachePlayerControllerInBoxes(class ADSPlayerController* DSController);
+
 	UFUNCTION()
 	void OnReadyToAdvance();
 

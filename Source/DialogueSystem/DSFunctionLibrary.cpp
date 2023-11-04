@@ -3,16 +3,17 @@
 
 #include "DSFunctionLibrary.h"
 #include "DSGameMode.h"
+#include "DSDialogueAudio.h"
 
-//class UDSDialogueManager* UDSFunctionLibrary::GetDialogueManager(UObject* WorldContext)
-//{
-//	UGameplayStatics::GetGameMode()
-//	if (UWorld* World = WorldContext->GetWorld())
-//	{
-//		if (ADSGameMode* DSGameMode = World->GetAuthGameMode<ADSGameMode>())
-//		{
-//			return DSGameMode->DialogueManager;
-//		}
-//	}
-//	return nullptr;
-//}
+class ADSDialogueAudio* UDSFunctionLibrary::GetDialogueAudio(UObject* WorldContext)
+{
+	if (UWorld* World = WorldContext->GetWorld())
+	{
+		if (ADSGameMode* DSGameMode = World->GetAuthGameMode<ADSGameMode>())
+		{
+			return DSGameMode->DialogueAudioManager;
+		}
+	}
+	return nullptr;
+}
+

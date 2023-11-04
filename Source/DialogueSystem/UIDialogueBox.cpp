@@ -9,6 +9,8 @@
 #include "UMG/Public/Components/WidgetSwitcher.h"
 #include "UMG/Public/Animation/WidgetAnimation.h"
 #include "UMG/Public/Animation/WidgetAnimationEvents.h"
+#include "DSDialogueAudio.h"
+#include "DSPlayerController.h"
 
 void UUIDialogueBox::NativeConstruct()
 {
@@ -59,6 +61,11 @@ void UUIDialogueBox::PushNextDialogueEvent(const struct FDialogueEvent& NewDialo
 	ContinueOrEnd->SetVisibility(ESlateVisibility::Collapsed);
 	ContinueOrEnd->SetActiveWidgetIndex(bIsLastEvent ? 1 : 0);
 
+	CancelInProgressEvents(/*CachedDialogueEvent*/);
+
+	// Goal: move away from caching this
+	CachedDialogueEvent = NewDialogueEvent;
+
 	UpdateSpeaker(NewDialogueEvent);
 	UpdateTextLine(NewDialogueEvent);
 	UpdateVoiceLine(NewDialogueEvent);
@@ -72,6 +79,14 @@ void UUIDialogueBox::FastForward()
 	DisplayStr.AppendChar(TEXT(' ')); // Adding a space at the end prevents weird UMG string wrapping early
 	DialogueBodyText->SetText(FText::FromString(DisplayStr));
 	SetReadyForNextLine();
+
+	if (CachedDialogueEvent.VoiceLine)
+	{
+		if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
+		{
+			DialogueAudio->StopVoiceLine(CachedDialogueEvent.VoiceLine);
+		}
+	}
 }
 
 void UUIDialogueBox::Show(bool bShow)
@@ -176,13 +191,27 @@ void UUIDialogueBox::UpdateVoiceLine(const FDialogueEvent& NewDialogueEvent)
 {
 	if (NewDialogueEvent.VoiceLine)
 	{
-
+		if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
+		{
+			DialogueAudio->PlayVoiceLine(NewDialogueEvent.VoiceLine);
+		}
 	}
 }
 
 void UUIDialogueBox::UpdateEmotion(const FDialogueEvent& NewDialogueEvent)
 {
 	NewDialogueEvent.Emotion;
+}
+
+void UUIDialogueBox::CancelInProgressEvents()
+{
+	if (CachedDialogueEvent.VoiceLine)
+	{
+		if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
+		{
+			DialogueAudio->StopVoiceLine(CachedDialogueEvent.VoiceLine);
+		}
+	}
 }
 
 void UUIDialogueBox::TypeOutChar()

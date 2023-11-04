@@ -20,16 +20,23 @@ void UUIDialogueScene::BeginDialogue(UDialogueAsset* Data)
 	if (!Data) return;
 	DialogueData = Data;
 
-	if (ADSPlayerController* DSController = Cast<ADSPlayerController>(UGameplayStatics::GetPlayerController(this,0)))
+	if (ADSPlayerController* DSController = Cast<ADSPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
 		DSController->BeginDialogue();
+
+		CachePlayerControllerInBoxes(DSController);
+
+		DialogueIdx = 0;
+
+		OnBeginDialogue.Broadcast();
+
+		AdvanceDialogue();
+
 	}
-
-	DialogueIdx = 0;
-
-	OnBeginDialogue.Broadcast();
-
-	AdvanceDialogue();
+	else
+	{
+		EndDialogue();
+	}
 }
 
 void UUIDialogueScene::AdvanceDialogue()
@@ -250,6 +257,14 @@ bool UUIDialogueScene::HideAllDialogueBoxes(bool bForce)
 		bBoxHidden |= HideDialogueBox(DialogueBox, false);
 	}
 	return bBoxHidden;
+}
+
+void UUIDialogueScene::CachePlayerControllerInBoxes(class ADSPlayerController* DSController)
+{
+	for (UUIDialogueBox* DialogueBox : DialogueBoxes)
+	{
+		DialogueBox->SetPlayerController(DSController);
+	}
 }
 
 UUIDialogueBox* UUIDialogueScene::GetDialogueBox(EDialogueBox EBox)

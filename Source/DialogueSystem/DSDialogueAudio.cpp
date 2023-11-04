@@ -16,6 +16,12 @@ ADSDialogueAudio::ADSDialogueAudio()
 
 	AudioComponent2 = CreateDefaultSubobject <UAudioComponent>(TEXT("AudioComponent2"));
 	AudioComponent2->SetupAttachment(RootComponent);
+
+	AudioComponent3 = CreateDefaultSubobject <UAudioComponent>(TEXT("AudioComponent3"));
+	AudioComponent3->SetupAttachment(RootComponent);
+
+	AudioComponent4 = CreateDefaultSubobject <UAudioComponent>(TEXT("AudioComponent4"));
+	AudioComponent4->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -24,6 +30,8 @@ void ADSDialogueAudio::BeginPlay()
 	Super::BeginPlay();	
 
 	RegisterWithGameMode();
+
+	RegisterAudioComponents();
 }
 
 bool ADSDialogueAudio::PlayVoiceLine(class USoundBase* VoiceLine)

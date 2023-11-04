@@ -47,12 +47,17 @@ public:
 	UFUNCTION()
 	void OnHideFinished();
 
+	// Sloppy
+	void SetPlayerController(class ADSPlayerController* DSController) { CachedController = DSController; }
+
 protected:
 	// Grab data from FDialogueLine
 	void UpdateSpeaker(const FDialogueEvent& NewDialogueEvent);
 	void UpdateTextLine(const FDialogueEvent& NewDialogueEvent);
 	void UpdateVoiceLine(const FDialogueEvent& NewDialogueEvent);
 	void UpdateEmotion(const FDialogueEvent& NewDialogueEvent);
+
+	void CancelInProgressEvents();
 
 	UFUNCTION(BlueprintCallable)
 		void SetReadyForNextLine();
@@ -111,11 +116,14 @@ protected:
 // Type Out Text
 protected:
 
-	/*UPROPERTY(BlueprintReadonly)
-	struct FDialogueEvent CachedDialogueEvent;*/
+	UPROPERTY(BlueprintReadonly)
+	struct FDialogueEvent CachedDialogueEvent;
 
 	UPROPERTY(EditDefaultsOnly)
 	class UDataTable* RichTextTable;
+
+	UPROPERTY()
+	class ADSPlayerController* CachedController;
 
 private:
 	FTimerHandle TypeOutTextHandle;

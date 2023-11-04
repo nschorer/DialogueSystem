@@ -13,7 +13,8 @@ UCLASS()
 class DIALOGUESYSTEM_API UDSFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-	
-	/*UFUNCTION(BlueprintPure, WorldContextObject = "WorldContext")
-	static class UDSDialogueManager* GetDialogueManager(UObject* WorldContext);*/
+
+public:
+	UFUNCTION(BlueprintPure, meta=(WorldContextObject = "WorldContext"))
+	static class ADSDialogueAudio* GetDialogueAudio(UObject* WorldContext);
 };

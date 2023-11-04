@@ -53,7 +53,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Dialogue)
 	class UDataTable* DefaultRichTextTable;
 
-protected:
+public:
 	UPROPERTY()
 	class UDSDialogueManager* DialogueManager;
 
