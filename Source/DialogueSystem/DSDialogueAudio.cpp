@@ -46,8 +46,8 @@ bool ADSDialogueAudio::PlayVoiceLine(class USoundBase* VoiceLine)
 
 	AudioComponent->SetSound(VoiceLine);
 	AudioComponent->Play();
-	//AudioComponent->OnAudioFinished.BindDynamic(this, ADSDialogueAudio::OnAudioFinished, AudioComponent);
-	//AudioComponent->OnAudioFinishedNative.AddUObject(this, &ADSDialogueAudio::OnAudioFinished, AudioComponent);
+
+	AudioComponent->OnAudioFinishedNative.AddUObject(this, &ADSDialogueAudio::OnAudioFinished, VoiceLine);
 
 	return true;
 }
@@ -103,9 +103,9 @@ UAudioComponent* ADSDialogueAudio::FindAvailableAudioComponent()
 	return nullptr;
 }
 
-void ADSDialogueAudio::OnAudioFinished(UAudioComponent* AudioComponent)
+void ADSDialogueAudio::OnAudioFinished(UAudioComponent* FinishedAudio, USoundBase* VoiceLine)
 {
-
+	OnDialogueAudioFinished.ExecuteIfBound(VoiceLine);
 }
 
 void ADSDialogueAudio::RegisterWithGameMode()

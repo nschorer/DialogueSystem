@@ -84,6 +84,8 @@ protected:
 	bool IsPreviousEventInProgress();
 	void TryFinishPreviousEvent();
 
+	void CleanUpLastEvent();
+
 	bool ShowDialogueBox(UUIDialogueBox* DialogueBox, bool bForce = false);
 
 	bool HideDialogueBox(UUIDialogueBox* DialogueBox, bool bForce = false);
@@ -117,4 +119,6 @@ protected:
 	bool bAutoAdvance;
 
 	FTimerHandle PauseTimerHandle;
+
+	UUIDialogueBox* CurrentEventDialogueBox;
 };

@@ -33,12 +33,10 @@ void UDSDialogueManager::OnInitiateDialogue(UDialogueAsset* DialogueData)
 	}
 }
 
-UE_DISABLE_OPTIMIZATION
 void UDSDialogueManager::OnAdvanceDialogue()
 {
 	CachedDialogueScene->AdvanceDialogue();
 }
-UE_ENABLE_OPTIMIZATION
 
 void UDSDialogueManager::OnEndDialogue()
 {

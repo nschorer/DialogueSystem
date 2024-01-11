@@ -51,6 +51,9 @@ void UUIDialogueScene::AdvanceDialogue()
 	// Push next event
 	else
 	{
+		// Conflicts with TryFinishPreviousEvent?
+		CleanUpLastEvent();
+
 		// No more events, end dialogue
 		if (!Events.IsValidIndex(DialogueIdx))
 		{
@@ -129,6 +132,15 @@ void UUIDialogueScene::TryFinishPreviousEvent()
 	}
 }
 
+void UUIDialogueScene::CleanUpLastEvent()
+{
+	if (!CurrentEventDialogueBox) return;
+	
+	CurrentEventDialogueBox->FastForward();
+
+	CurrentEventDialogueBox = nullptr;
+}
+
 bool UUIDialogueScene::ShowDialogueBox(UUIDialogueBox* DialogueBox, bool bForce)
 {
 	if (DialogueBox)
@@ -196,6 +208,7 @@ void UUIDialogueScene::SingleSpeaker(FDialogueEvent& CurrentEvent)
 	UUIDialogueBox* DialogueBox = GetDialogueBox(CurrentEvent.EBox);
 	if (!DialogueBox) return;
 	
+	CurrentEventDialogueBox = DialogueBox;
 
 	DialogueBox->OnShowAnimationFinished.BindUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, CurrentEvent);
 	if (!ShowDialogueBox(DialogueBox))

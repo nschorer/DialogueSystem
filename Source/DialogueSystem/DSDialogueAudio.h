@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "DSDialogueAudio.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnDialogueAudioFinished, USoundBase* /*VoiceLine*/);
+
 class USoundBase;
 
 UCLASS(Blueprintable, BlueprintType)
@@ -52,10 +54,12 @@ protected:
 	UAudioComponent* FindAvailableAudioComponent();
 
 	UFUNCTION()
-	void OnAudioFinished(UAudioComponent* AudioComponent);
+	void OnAudioFinished(UAudioComponent* FinishedAudio, USoundBase* VoiceLine);
 
 	void RegisterWithGameMode();
 
 protected:
 	TArray<UAudioComponent*> AudioComponents;
+
+	FOnDialogueAudioFinished OnDialogueAudioFinished;
 };
