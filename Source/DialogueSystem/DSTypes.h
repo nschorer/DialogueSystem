@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Texture2D.h"
+#include "GameplayTagContainer.h"
 #include "DSTypes.generated.h"
 
 UCLASS(BlueprintType)
@@ -35,22 +36,23 @@ enum class EEmotion : uint8 {
 	Embarrassed
 };
 
-USTRUCT(BlueprintType)
-struct DIALOGUESYSTEM_API FDialogueLine
+UCLASS(BlueprintType)
+class DIALOGUESYSTEM_API UDSDialogueLineAsset: public UDataAsset
 {
 	GENERATED_BODY()
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		UDSCharacterAsset* Speaker;
+public:
+	UPROPERTY(EditDefaultsOnly)
+	UDSCharacterAsset* Speaker;
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		EEmotion Emotion;
+	UPROPERTY(EditDefaultsOnly)
+	EEmotion Emotion;
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		FText Line;
+	UPROPERTY(EditDefaultsOnly, Category = "Text")
+	FText TextLine;
 
-		UPROPERTY(EditDefaultsOnly)
-		class UDataTable* RichTextTable;
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	USoundBase* VoiceLine;
 };
 
 UCLASS(BlueprintType)
@@ -161,21 +163,112 @@ public:
 	class UDataTable* S2_RichTextTable;
 };
 
+/**
+ *
+ */
+USTRUCT(BlueprintType)
+struct DIALOGUESYSTEM_API FDialogueLine
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditDefaultsOnly)
+		UDSDialogueLineAsset* DialogueLine;
+
+	UPROPERTY(EditDefaultsOnly)
+		EDialogueBox EBox;
+};
+
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct DIALOGUESYSTEM_API FDialogueEventTwo
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Lines")
+	TArray<FDialogueLine> Lines;
+
+	// If false, user input will be ignored, and the event will play out by itself.
+	// It will auto advance to the next event.
+	UPROPERTY(EditDefaultsOnly, Category = "User Control")
+	bool bAllowUserControl = true;
+
+	// Let the user press a bud mid-sentence to fast forward dialogue.
+	// This will bring the event to the end-state, but will not advance to the next event.
+	UPROPERTY(EditDefaultsOnly, Category = "User Control")
+	bool bCanFastForward = true;
+
+	// After this event ends, wait this amount of time before starting next event.
+	UPROPERTY(EditDefaultsOnly)
+	float PauseTime = 0.1f;
+};
+
 UCLASS(BlueprintType)
 class DIALOGUESYSTEM_API UDialogueAsset : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DialogueOverrides)
-		class UInputMappingContext* OverrideMappingContext;
+	// The tag is used to look up which scene and mapping context to use, configured in the game instance.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag DialogueType;
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DialogueOverrides)
-		class UUIDialogueBox* OverrideDialogueBox;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<struct FDialogueEvent> DialogueEvents;
+};
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DialogueOverrides)
-		class UDataTable* OverrideRichTextTable;
+UCLASS(BlueprintType)
+class DIALOGUESYSTEM_API UDialogueAsset2 : public UDataAsset
+{
+	GENERATED_BODY()
 
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Events)
-		TArray<struct FDialogueEvent> DialogueEvents;
+public:
+	// The tag is used to look up which scene and mapping context to use, configured in the game instance.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag DialogueType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<struct FDialogueEventTwo> DialogueEvents;
+};
+
+/**
+ *
+ */
+USTRUCT(BlueprintType)
+struct DIALOGUESYSTEM_API FDialogueTypeSettings
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUIDialogueScene> DialogueScene;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = DialogueOverrides)
+	class UInputMappingContext* MappingContext;
+
+	// If false, user input will be ignored, and the dialogue will play out by itself.
+	// It will auto advance from event to event.
+	// 
+	// Interaction with FDialogueEvent.bAllowUserControl:
+	//    If this == true,  then FDialogueEvent.bAllowUserControl can be set to false to override per event.
+	//    If this == false, then FDialogueEvent.bAllowUserControl can NOT override.
+	UPROPERTY(EditDefaultsOnly)
+	bool bAllowManualControl = true;
+};
+
+/**
+ *
+ */
+UCLASS(BlueprintType)
+class DIALOGUESYSTEM_API UStandardDialogueSettings : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditDefaultsOnly)
+	TMap<FGameplayTag, FDialogueTypeSettings> DialogueTypes;
 };
