@@ -87,83 +87,6 @@ enum class EDialogueBox : uint8
 };
 
 /**
- * 
- */
-USTRUCT(BlueprintType)
-struct DIALOGUESYSTEM_API FDialogueEvent
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditDefaultsOnly)
-	EDialogueEventType Type;
-
-public:
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition =	"Type == EDialogueEventType::SingleSpeaker"))
-	UDSCharacterAsset* Speaker;
-
-	UPROPERTY(EditDefaultsOnly, meta =(EditConditionHides,
-		EditCondition = "Type == EDialogueEventType::SingleSpeaker"))
-	EDialogueBox EBox;
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition = "Type == EDialogueEventType::SingleSpeaker"))
-	EEmotion Emotion;
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition = "Type == EDialogueEventType::SingleSpeaker"))
-	FText TextLine;
-
-	UPROPERTY(EditDefaultsOnly, meta = (EditConditionHides,
-		EditCondition = "Type == EDialogueEventType::SingleSpeaker"))
-	USoundBase* VoiceLine;
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition = "Type == EDialogueEventType::SingleSpeaker"))
-	bool bCanFastForward = true;
-
-	UPROPERTY(EditDefaultsOnly, meta = (EditConditionHides,
-		EditCondition = "Type == EDialogueEventType::Pause"))
-	float PauseTime = 1.0f;
-
-	UPROPERTY(EditDefaultsOnly, meta = (EditConditionHides,
-		EditCondition = "Type == EDialogueEventType::SingleSpeaker"))
-	bool bAutoAdvance = false;
-
-	// Overrides
-
-	UPROPERTY(EditDefaultsOnly)
-	bool bShowOverrides;
-
-
-	UPROPERTY(EditDefaultsOnly, Category = "Override", meta = (EditConditionHides,
-		EditCondition = "(Type == EDialogueEventType::SingleSpeaker || Type == EDIalogueEventType::DoubleSpeaker) && bShowOverrides"))
-	class UInputMappingContext* MappingContext;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Override", meta = (EditConditionHides,
-		EditCondition = "(Type == EDialogueEventType::SingleSpeaker || Type == EDIalogueEventType::DoubleSpeaker) && bShowOverrides"))
-	class UUIDialogueBox* DialogueBox;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Override", meta = (EditConditionHides,
-		EditCondition = "(Type == EDialogueEventType::SingleSpeaker || Type == EDIalogueEventType::DoubleSpeaker) && bShowOverrides"))
-	class UDataTable* RichTextTable;
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition = "Type == EDialogueEventType::DoubleSpeaker && bShowOverrides"))
-	class UInputMappingContext* S2_MappingContext;
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition = "Type == EDialogueEventType::DoubleSpeaker && bShowOverrides"))
-	class UUIDialogueBox* S2_DialogueBox;
-
-	UPROPERTY(EditDefaultsOnly, meta=(EditConditionHides, 
-		EditCondition = "Type == EDialogueEventType::DoubleSpeaker && bShowOverrides"))
-	class UDataTable* S2_RichTextTable;
-};
-
-/**
  *
  */
 USTRUCT(BlueprintType)
@@ -176,14 +99,14 @@ public:
 		UDSDialogueLineAsset* DialogueLine;
 
 	UPROPERTY(EditDefaultsOnly)
-		EDialogueBox EBox;
+		FGameplayTag BoxTag;
 };
 
 /**
  * 
  */
 USTRUCT(BlueprintType)
-struct DIALOGUESYSTEM_API FDialogueEventTwo
+struct DIALOGUESYSTEM_API FDialogueEvent
 {
 	GENERATED_BODY()
 
@@ -219,20 +142,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<struct FDialogueEvent> DialogueEvents;
-};
-
-UCLASS(BlueprintType)
-class DIALOGUESYSTEM_API UDialogueAsset2 : public UDataAsset
-{
-	GENERATED_BODY()
-
-public:
-	// The tag is used to look up which scene and mapping context to use, configured in the game instance.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag DialogueType;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<struct FDialogueEventTwo> DialogueEvents;
 };
 
 /**

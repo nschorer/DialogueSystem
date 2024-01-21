@@ -27,13 +27,19 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable)
-	void PushNextDialogueEvent(const FDialogueEvent& NewDialogueEvent, bool bIsLastEvent);
+	void PushLine(const UDSDialogueLineAsset* Line, bool bIsLastEvent);
 
 	UFUNCTION(BlueprintCallable)
 	void FastForward();
 
 	UFUNCTION(BlueprintCallable)
+	void StopVoice();
+
+	UFUNCTION(BlueprintCallable)
 	bool IsDialogueReady() const {return bDialogueReady;}
+
+	UFUNCTION()
+	bool GetIsShowing() const {return bIsShowing;}
 
 	UFUNCTION()
 	void Show(bool bShow);
@@ -50,12 +56,14 @@ public:
 	// Sloppy
 	void SetPlayerController(class ADSPlayerController* DSController) { CachedController = DSController; }
 
+	UFUNCTION()
+	FGameplayTag GetTag() const {return Tag;}
+
 protected:
-	// Grab data from FDialogueLine
-	void UpdateSpeaker(const FDialogueEvent& NewDialogueEvent);
-	void UpdateTextLine(const FDialogueEvent& NewDialogueEvent);
-	void UpdateVoiceLine(const FDialogueEvent& NewDialogueEvent);
-	void UpdateEmotion(const FDialogueEvent& NewDialogueEvent);
+	void UpdateSpeaker(const UDSDialogueLineAsset* NewDialogueEvent);
+	void UpdateTextLine(const UDSDialogueLineAsset* NewDialogueEvent);
+	void UpdateVoiceLine(const UDSDialogueLineAsset* NewDialogueEvent);
+	void UpdateEmotion(const UDSDialogueLineAsset* NewDialogueEvent);
 
 	void CancelInProgressEvents();
 
@@ -64,6 +72,10 @@ protected:
 
 // Child Widgets
 protected:
+
+	UPROPERTY(EditAnywhere, Category = Dialogue)
+	FGameplayTag Tag;
+
 	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
 	class UTextBlock* DialogueSpeakerText;
 
@@ -117,13 +129,16 @@ protected:
 protected:
 
 	UPROPERTY(BlueprintReadonly)
-	struct FDialogueEvent CachedDialogueEvent;
+	const class UDSDialogueLineAsset* CachedLine;
 
 	UPROPERTY(EditDefaultsOnly)
 	class UDataTable* RichTextTable;
 
 	UPROPERTY()
 	class ADSPlayerController* CachedController;
+
+	UPROPERTY()
+	bool bIsShowing;
 
 private:
 	FTimerHandle TypeOutTextHandle;

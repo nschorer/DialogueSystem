@@ -56,20 +56,24 @@ float UUIDialogueBox::GetTypeOutDelay()
 	return 0.001f;
 }
 
-void UUIDialogueBox::PushNextDialogueEvent(const struct FDialogueEvent& NewDialogueEvent, bool bIsLastEvent)
+void UUIDialogueBox::PushLine(const UDSDialogueLineAsset* Line, bool bIsLastEvent)
 {
 	ContinueOrEnd->SetVisibility(ESlateVisibility::Collapsed);
 	ContinueOrEnd->SetActiveWidgetIndex(bIsLastEvent ? 1 : 0);
 
 	CancelInProgressEvents(/*CachedDialogueEvent*/);
 
-	// Goal: move away from caching this
-	CachedDialogueEvent = NewDialogueEvent;
+	if (!Line)
+	{
+		ensureMsgf(false, TEXT("UUIDialogueBox::PushLine -- Invalid line."));
+	}
 
-	UpdateSpeaker(NewDialogueEvent);
-	UpdateTextLine(NewDialogueEvent);
-	UpdateVoiceLine(NewDialogueEvent);
-	UpdateEmotion(NewDialogueEvent);
+	CachedLine = Line;
+
+	UpdateSpeaker(Line);
+	UpdateTextLine(Line);
+	UpdateVoiceLine(Line);
+	UpdateEmotion(Line);
 }
 
 void UUIDialogueBox::FastForward()
@@ -79,12 +83,15 @@ void UUIDialogueBox::FastForward()
 	DisplayStr.AppendChar(TEXT(' ')); // Adding a space at the end prevents weird UMG string wrapping early
 	DialogueBodyText->SetText(FText::FromString(DisplayStr));
 	SetReadyForNextLine();
+}
 
-	if (CachedDialogueEvent.VoiceLine)
+void UUIDialogueBox::StopVoice()
+{
+	if (CachedLine && CachedLine->VoiceLine)
 	{
 		if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
 		{
-			DialogueAudio->StopVoiceLine(CachedDialogueEvent.VoiceLine);
+			DialogueAudio->StopVoiceLine(CachedLine->VoiceLine);
 		}
 	}
 }
@@ -93,6 +100,8 @@ void UUIDialogueBox::Show(bool bShow)
 {
 	if (bShow)
 	{
+		bIsShowing = true;
+
 		// Make this into a function
 		DialogueSpeakerText->SetVisibility(ESlateVisibility::Collapsed);
 		DialogueBodyText->SetVisibility(ESlateVisibility::Collapsed);
@@ -152,22 +161,24 @@ void UUIDialogueBox::OnReverseShowFinished()
 
 void UUIDialogueBox::OnHideFinished()
 {
+	bIsShowing = false;
+
 	SetVisibility(ESlateVisibility::Collapsed);
 	UnbindAllFromAnimationFinished(AnimHide);
 	OnHideAnimationFinished.ExecuteIfBound();
 }
 
-void UUIDialogueBox::UpdateSpeaker(const FDialogueEvent& NewDialogueEvent)
+void UUIDialogueBox::UpdateSpeaker(const UDSDialogueLineAsset* NewLine)
 {
-	//DialogueSpeakerText->SetText(CachedDialogue.Speaker->Name);
-	DialogueSpeakerText->SetText(NewDialogueEvent.Speaker->Name);
+	DialogueSpeakerText->SetText(NewLine->Speaker->Name);
+
 	DialogueSpeakerText->SetVisibility(ESlateVisibility::HitTestInvisible);
-	
+
 	// Move this to its own function
 	SpeakerImage->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
-void UUIDialogueBox::UpdateTextLine(const FDialogueEvent& NewDialogueEvent)
+void UUIDialogueBox::UpdateTextLine(const UDSDialogueLineAsset* NewLine)
 {
 	if (bTypeOutText)
 	{
@@ -176,8 +187,7 @@ void UUIDialogueBox::UpdateTextLine(const FDialogueEvent& NewDialogueEvent)
 		DialogueBodyText->SetText(FText());
 		DialogueBodyText->SetVisibility(ESlateVisibility::HitTestInvisible);
 		TypeOutTextIdx = 0;
-		//TypedOutString = CachedDialogue.Line.ToString();
-		TypedOutString = NewDialogueEvent.TextLine.ToString();
+		TypedOutString = NewLine->TextLine.ToString();
 
 		bDialogueReady = false;
 	}
@@ -187,35 +197,41 @@ void UUIDialogueBox::UpdateTextLine(const FDialogueEvent& NewDialogueEvent)
 	}
 }
 
-void UUIDialogueBox::UpdateVoiceLine(const FDialogueEvent& NewDialogueEvent)
+void UUIDialogueBox::UpdateVoiceLine(const UDSDialogueLineAsset* NewLine)
 {
-	if (NewDialogueEvent.VoiceLine)
+	if (NewLine->VoiceLine)
 	{
 		if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
 		{
-			DialogueAudio->PlayVoiceLine(NewDialogueEvent.VoiceLine);
+			DialogueAudio->PlayVoiceLine(NewLine->VoiceLine);
 		}
 	}
 }
 
-void UUIDialogueBox::UpdateEmotion(const FDialogueEvent& NewDialogueEvent)
+void UUIDialogueBox::UpdateEmotion(const UDSDialogueLineAsset* NewLine)
 {
-	NewDialogueEvent.Emotion;
+	NewLine->Emotion;
 }
 
 void UUIDialogueBox::CancelInProgressEvents()
 {
-	if (CachedDialogueEvent.VoiceLine)
+	if (CachedLine && CachedLine->VoiceLine)
 	{
 		if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
 		{
-			DialogueAudio->StopVoiceLine(CachedDialogueEvent.VoiceLine);
+			DialogueAudio->StopVoiceLine(CachedLine->VoiceLine);
 		}
 	}
 }
 
 void UUIDialogueBox::TypeOutChar()
 {
+	if (TypedOutString.IsEmpty())
+	{
+		ensureMsgf(false, TEXT("UUIDialogueBox::TypeOutChar -- Invalid type out string."));
+		return;
+	}
+
 	// Get all of the text from the previous typed out line, minus all of the 'unread' characters.
 
 	InProgressString = TypedOutString.LeftChop(TypedOutString.Len() - TypeOutTextIdx);

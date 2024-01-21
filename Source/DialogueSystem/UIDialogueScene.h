@@ -45,41 +45,18 @@ public:
 	FDialogueSceneEvent OnEndDialogue;
 
 protected:
-
-	UPROPERTY(meta = (BindWidget))
-	class UUIDialogueBox* DialogueBox1;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox2;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox3;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox4;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox5;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox6;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox7;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UUIDialogueBox* DialogueBox8;
+	//void SingleSpeaker(FDialogueEvent& CurrentEvent);
+	//void Pause(FDialogueEvent& CurrentEvent);
 
 protected:
-	void SingleSpeaker(FDialogueEvent& CurrentEvent);
-	void Pause(FDialogueEvent& CurrentEvent);
+	UUIDialogueBox* GetDialogueBox(FGameplayTag Tag);
 
-protected:
-	UUIDialogueBox* GetDialogueBox(EDialogueBox EBox);
+	UFUNCTION(BlueprintImplementableEvent)
+	void GatherDialogueBoxes();
 
 	void RegisterDialogueBoxes();
 
-	void AdvanceDialogueBox(UUIDialogueBox* DialogueBox, FDialogueEvent& CurrentEvent);
+	void AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine);
 
 	bool IsPreviousEventInProgress();
 	void TryFinishPreviousEvent();
@@ -100,7 +77,7 @@ protected:
 	void OnFastForwardDialogue(UUIDialogueBox* DialogueBox);
 
 	UFUNCTION()
-	void ShowAnimationFinished(UUIDialogueBox* DialogueBox, FDialogueEvent CurrentEvent);
+	void ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine);
 
 	UFUNCTION()
 	void HideAnimationFinished();
@@ -109,8 +86,10 @@ protected:
 
 protected:
 
+	UPROPERTY(BlueprintReadWrite)
 	TArray<UUIDialogueBox*> DialogueBoxes;
 
+	UPROPERTY()
 	class UDialogueAsset* DialogueData;
 
 	int32 DialogueIdx;
@@ -120,5 +99,6 @@ protected:
 
 	FTimerHandle PauseTimerHandle;
 
-	UUIDialogueBox* CurrentEventDialogueBox;
+	UPROPERTY()
+	TArray<UUIDialogueBox*> ActiveDialogueBoxes;
 };

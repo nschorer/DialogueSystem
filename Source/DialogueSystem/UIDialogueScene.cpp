@@ -8,10 +8,10 @@
 #include "UMG/Public/Blueprint/UserWidget.h"
 #include "UIDialogueBox.h"
 #include "DSTypes.h"
+#include "UMG/Public/Blueprint/WidgetBlueprintLibrary.h"
 
 void UUIDialogueScene::NativeOnInitialized()
 {
-	DialogueBox1->OnDialogueReady.AddUniqueDynamic(this, &UUIDialogueScene::OnReadyToAdvance);
 	RegisterDialogueBoxes();
 }
 
@@ -63,47 +63,52 @@ void UUIDialogueScene::AdvanceDialogue()
 
 		FDialogueEvent& CurrentEvent = Events[DialogueIdx];
 
-		switch (CurrentEvent.Type)
+		// Execute Dialogue Boxes
+		for (const FDialogueLine& Line : CurrentEvent.Lines)
 		{
-		case EDialogueEventType::None:
-			break;
-		case EDialogueEventType::SingleSpeaker:
-			SingleSpeaker(CurrentEvent);
-			break;
-		case EDialogueEventType::Pause:
-			Pause(CurrentEvent);
-			break;
-		default:
-			break;
+			UUIDialogueBox* DialogueBox = GetDialogueBox(Line.BoxTag);
+			if (!DialogueBox) continue;
 
+			ActiveDialogueBoxes.AddUnique(DialogueBox);
+
+			DialogueBox->OnShowAnimationFinished.BindUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, Line.DialogueLine);
+			if (!ShowDialogueBox(DialogueBox))
+			{
+				// It was already showing
+				ShowAnimationFinished(DialogueBox, Line.DialogueLine);
+			}
 		}
+
+		// Execute Pause
+
+		// Execute Camera
 	}
 }
 
 void UUIDialogueScene::EndDialogue()
 {
-	// To-do: work out a system where we listen to delegates for all active dialogue boxes
-	UUIDialogueBox* DialogueBox = nullptr;
-	if (!DialogueBoxes.IsEmpty())
+	// Clean up all dialogue boxes before ending conversation
+	for (UUIDialogueBox* DialogueBox : DialogueBoxes)
 	{
-		DialogueBox = DialogueBoxes[0];
-	}
-	if (DialogueBox)
-	{
-		DialogueBox->OnHideAnimationFinished.BindUObject(this, &UUIDialogueScene::FinalizeEndDialogue);
-		if (!HideAllDialogueBoxes())
+		if (DialogueBox)
 		{
-			FinalizeEndDialogue();
+			DialogueBox->OnHideAnimationFinished.BindUObject(this, &UUIDialogueScene::FinalizeEndDialogue);
+			DialogueBox->Show(false);
 		}
-	}
-	else
-	{
-		FinalizeEndDialogue();
 	}
 }
 
 void UUIDialogueScene::FinalizeEndDialogue()
 {
+	// Don't finalize until all dialogue boxes have finished their hide animations
+	for (UUIDialogueBox* DialogueBox : DialogueBoxes)
+	{
+		if (DialogueBox->GetIsShowing())
+		{
+			return;
+		}
+	}
+
 	// To-do: work out a system where we listen to delegates for all active dialogue boxes
 	if (!DialogueBoxes.IsEmpty())
 	{
@@ -134,18 +139,19 @@ void UUIDialogueScene::TryFinishPreviousEvent()
 
 void UUIDialogueScene::CleanUpLastEvent()
 {
-	if (!CurrentEventDialogueBox) return;
-	
-	CurrentEventDialogueBox->FastForward();
-
-	CurrentEventDialogueBox = nullptr;
+	for (UUIDialogueBox* ActiveDialogueBox : ActiveDialogueBoxes)
+	{
+		ActiveDialogueBox->FastForward();
+		ActiveDialogueBox->StopVoice();
+	}
+	ActiveDialogueBoxes.Empty();
 }
 
 bool UUIDialogueScene::ShowDialogueBox(UUIDialogueBox* DialogueBox, bool bForce)
 {
 	if (DialogueBox)
 	{
-		if (bForce || !DialogueBox->IsVisible())
+		if (bForce || !DialogueBox->GetIsShowing())
 		{
 			DialogueBox->Show(true);
 			return true;
@@ -158,7 +164,7 @@ bool UUIDialogueScene::HideDialogueBox(UUIDialogueBox* DialogueBox, bool bForce)
 {
 	if (DialogueBox)
 	{
-		if (bForce || DialogueBox->IsVisible())
+		if (bForce || DialogueBox->GetIsShowing())
 		{
 			DialogueBox->Show(false);
 			return true;
@@ -178,22 +184,23 @@ void UUIDialogueScene::OnReadyToAdvance()
 	}
 }
 
-void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, FDialogueEvent CurrentEvent)
+void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine)
 {
 	DialogueBox->OnShowAnimationFinished.Unbind();
 
-	AdvanceDialogueBox(DialogueBox, CurrentEvent);
+	AdvanceDialogueBox(DialogueBox, CurrentLine);
 
 	bInProgress = true;
-	bAutoAdvance = CurrentEvent.bAutoAdvance;
-	if (CurrentEvent.bCanFastForward)
+	//bAutoAdvance = CurrentEvent.bAutoAdvance;
+	/*if (CurrentEvent.bCanFastForward)
 	{
 		OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
 	}
 	else
 	{
 		OnFastForwardDel.Unbind();
-	}
+	}*/
+	OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
 }
 
 void UUIDialogueScene::HideAnimationFinished()
@@ -203,57 +210,47 @@ void UUIDialogueScene::HideAnimationFinished()
 
 
 
-void UUIDialogueScene::SingleSpeaker(FDialogueEvent& CurrentEvent)
+//void UUIDialogueScene::SingleSpeaker(FDialogueEvent& CurrentEvent)
+//{
+//	UUIDialogueBox* DialogueBox = nullptr;// GetDialogueBox(CurrentEvent.EBox);
+//	if (!DialogueBox) return;
+//	
+//	CurrentEventDialogueBox = DialogueBox;
+//
+//	DialogueBox->OnShowAnimationFinished.BindUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, CurrentEvent);
+//	if (!ShowDialogueBox(DialogueBox))
+//	{
+//		// It was already showing
+//		ShowAnimationFinished(DialogueBox, CurrentEvent);
+//	}
+//
+//	/*AdvanceDialogueBox(DialogueBox, CurrentEvent);
+//
+//	bInProgress = true;
+//	bAutoAdvance = CurrentEvent.bAutoAdvance;
+//	if (CurrentEvent.bCanFastForward)
+//	{
+//		OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
+//	}
+//	else
+//	{
+//		OnFastForwardDel.Unbind();
+//	}*/
+//}
+
+//void UUIDialogueScene::Pause(FDialogueEvent& CurrentEvent)
+//{
+//	HideAllDialogueBoxes();
+//	DialogueIdx++;
+//
+//	bInProgress = true;
+//	bAutoAdvance = true;
+//	GetWorld()->GetTimerManager().SetTimer(PauseTimerHandle, this, &UUIDialogueScene::OnReadyToAdvance, CurrentEvent.PauseTime);
+//}
+
+void UUIDialogueScene::AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine)
 {
-	UUIDialogueBox* DialogueBox = GetDialogueBox(CurrentEvent.EBox);
-	if (!DialogueBox) return;
-	
-	CurrentEventDialogueBox = DialogueBox;
-
-	DialogueBox->OnShowAnimationFinished.BindUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, CurrentEvent);
-	if (!ShowDialogueBox(DialogueBox))
-	{
-		// It was already showing
-		ShowAnimationFinished(DialogueBox, CurrentEvent);
-	}
-
-	/*AdvanceDialogueBox(DialogueBox, CurrentEvent);
-
-	bInProgress = true;
-	bAutoAdvance = CurrentEvent.bAutoAdvance;
-	if (CurrentEvent.bCanFastForward)
-	{
-		OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
-	}
-	else
-	{
-		OnFastForwardDel.Unbind();
-	}*/
-}
-
-void UUIDialogueScene::Pause(FDialogueEvent& CurrentEvent)
-{
-	HideAllDialogueBoxes();
-	DialogueIdx++;
-
-	bInProgress = true;
-	bAutoAdvance = true;
-	GetWorld()->GetTimerManager().SetTimer(PauseTimerHandle, this, &UUIDialogueScene::OnReadyToAdvance, CurrentEvent.PauseTime);
-}
-
-void UUIDialogueScene::AdvanceDialogueBox(UUIDialogueBox* DialogueBox, FDialogueEvent& CurrentEvent)
-{
-	/*if (DialogueBox->IsDialogueReady())
-	{
-		DialogueBox->PushNextDialogueEvent(CurrentEvent, false);
-		DialogueIdx++;
-	}
-	else
-	{
-		DialogueBox->FastForward();
-	}*/
-
-	DialogueBox->PushNextDialogueEvent(CurrentEvent, false);
+	DialogueBox->PushLine(CurrentLine, false);
 	DialogueIdx++;
 }
 
@@ -280,70 +277,34 @@ void UUIDialogueScene::CachePlayerControllerInBoxes(class ADSPlayerController* D
 	}
 }
 
-UUIDialogueBox* UUIDialogueScene::GetDialogueBox(EDialogueBox EBox)
+UUIDialogueBox* UUIDialogueScene::GetDialogueBox(FGameplayTag Tag)
 {
-	switch (EBox)
+	for (UUIDialogueBox* DialogueBox : DialogueBoxes)
 	{
-	case EDialogueBox::Box1:
-		return DialogueBox1;
-	case EDialogueBox::Box2:
-		return DialogueBox2;
-	case EDialogueBox::Box3:
-		return DialogueBox3;
-	case EDialogueBox::Box4:
-		return DialogueBox4;
-	case EDialogueBox::Box5:
-		return DialogueBox5;
-	case EDialogueBox::Box6:
-		return DialogueBox6;
-	case EDialogueBox::Box7:
-		return DialogueBox7;
-	case EDialogueBox::Box8:
-		return DialogueBox8;
-	default:
-		return nullptr;
+		if (Tag.IsValid() && DialogueBox->GetTag().MatchesTag(Tag))
+		{
+			return DialogueBox;
+		}
+		else
+		{
+			ensureAlwaysMsgf(false, TEXT("UUIDialogueScene::GetDialogueBox -- Could not find dialogue box with tag."));
+		}
 	}
+	return nullptr;
 }
 
 void UUIDialogueScene::RegisterDialogueBoxes()
 {
-	if (DialogueBox1)
+	DialogueBoxes.Empty();
+	GatherDialogueBoxes();
+
+	if (DialogueBoxes.IsEmpty())
 	{
-		DialogueBoxes.Add(DialogueBox1);
+		ensureMsgf(false, TEXT("UUIDialogueScene::RegisterDialogueBoxes -- No dialogue boxes registered. Make sure to implement GatherDialogueBoxes() in your blueprint."));
 	}
 
-	if (DialogueBox2)
+	for (UUIDialogueBox* DialogueBox : DialogueBoxes)
 	{
-		DialogueBoxes.Add(DialogueBox2);
-	}
-
-	if (DialogueBox3)
-	{
-		DialogueBoxes.Add(DialogueBox3);
-	}
-
-	if (DialogueBox4)
-	{
-		DialogueBoxes.Add(DialogueBox4);
-	}
-
-	if (DialogueBox5)
-	{
-		DialogueBoxes.Add(DialogueBox5);
-	}
-
-	if (DialogueBox6)
-	{
-		DialogueBoxes.Add(DialogueBox6);
-	}
-
-	if (DialogueBox7)
-	{
-		DialogueBoxes.Add(DialogueBox7);
-	}
-
-	if (DialogueBox8)
-	{
-		DialogueBoxes.Add(DialogueBox8);
+		DialogueBox->OnDialogueReady.AddUniqueDynamic(this, &UUIDialogueScene::OnReadyToAdvance);
 	}
 }
