@@ -41,8 +41,8 @@ public:
 	UFUNCTION()
 	bool GetIsShowing() const {return bIsShowing;}
 
-	UFUNCTION()
-	void Show(bool bShow);
+	//UFUNCTION()
+	void Show(bool bShow, const FOnAnimationFinished& OnAnimationFinished);
 
 	UFUNCTION()
 	void OnShowFinished();
@@ -117,8 +117,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnDialogueReady OnDialogueReady;
 
-	FOnAnimationFinished OnShowAnimationFinished;
-	FOnAnimationFinished OnHideAnimationFinished;
+	FOnAnimationFinished OnShowHideAnimFinished;
 
 // Properties
 protected:

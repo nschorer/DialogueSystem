@@ -96,8 +96,9 @@ void UUIDialogueBox::StopVoice()
 	}
 }
 
-void UUIDialogueBox::Show(bool bShow)
+void UUIDialogueBox::Show(bool bShow, const FOnAnimationFinished& OnAnimationFinished)
 {
+	OnShowHideAnimFinished = OnAnimationFinished;
 	if (bShow)
 	{
 		bIsShowing = true;
@@ -106,6 +107,7 @@ void UUIDialogueBox::Show(bool bShow)
 		DialogueSpeakerText->SetVisibility(ESlateVisibility::Collapsed);
 		DialogueBodyText->SetVisibility(ESlateVisibility::Collapsed);
 		SpeakerImage->SetVisibility(ESlateVisibility::Collapsed);
+		ContinueOrEnd->SetVisibility(ESlateVisibility::Collapsed);
 
 		SetVisibility(ESlateVisibility::Visible);
 		if (AnimShow)
@@ -149,14 +151,18 @@ void UUIDialogueBox::Show(bool bShow)
 void UUIDialogueBox::OnShowFinished()
 {
 	UnbindAllFromAnimationFinished(AnimShow);
-	OnShowAnimationFinished.ExecuteIfBound();
+	OnShowHideAnimFinished.ExecuteIfBound();
+	OnShowHideAnimFinished.Unbind();
 }
 
 void UUIDialogueBox::OnReverseShowFinished()
 {
+	bIsShowing = false;
+
 	SetVisibility(ESlateVisibility::Collapsed);
 	UnbindAllFromAnimationFinished(AnimShow);
-	OnHideAnimationFinished.ExecuteIfBound();
+	OnShowHideAnimFinished.ExecuteIfBound();
+	OnShowHideAnimFinished.Unbind();
 }
 
 void UUIDialogueBox::OnHideFinished()
@@ -165,7 +171,8 @@ void UUIDialogueBox::OnHideFinished()
 
 	SetVisibility(ESlateVisibility::Collapsed);
 	UnbindAllFromAnimationFinished(AnimHide);
-	OnHideAnimationFinished.ExecuteIfBound();
+	OnShowHideAnimFinished.ExecuteIfBound();
+	OnShowHideAnimFinished.Unbind();
 }
 
 void UUIDialogueBox::UpdateSpeaker(const UDSDialogueLineAsset* NewLine)

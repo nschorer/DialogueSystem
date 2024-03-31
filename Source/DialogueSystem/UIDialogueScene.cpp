@@ -62,6 +62,7 @@ void UUIDialogueScene::AdvanceDialogue()
 		}
 
 		FDialogueEvent& CurrentEvent = Events[DialogueIdx];
+		bool bIsLast = DialogueIdx >= Events.Num() - 1;
 
 		// Execute Dialogue Boxes
 		for (const FDialogueLine& Line : CurrentEvent.Lines)
@@ -71,11 +72,11 @@ void UUIDialogueScene::AdvanceDialogue()
 
 			ActiveDialogueBoxes.AddUnique(DialogueBox);
 
-			DialogueBox->OnShowAnimationFinished.BindUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, Line.DialogueLine);
-			if (!ShowDialogueBox(DialogueBox))
+			FOnAnimationFinished Callback = FOnAnimationFinished::CreateUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, Line.DialogueLine, bIsLast);
+			if (!ShowDialogueBox(DialogueBox, Callback))
 			{
 				// It was already showing
-				ShowAnimationFinished(DialogueBox, Line.DialogueLine);
+				ShowAnimationFinished(DialogueBox, Line.DialogueLine, bIsLast);
 			}
 		}
 
@@ -88,14 +89,8 @@ void UUIDialogueScene::AdvanceDialogue()
 void UUIDialogueScene::EndDialogue()
 {
 	// Clean up all dialogue boxes before ending conversation
-	for (UUIDialogueBox* DialogueBox : DialogueBoxes)
-	{
-		if (DialogueBox)
-		{
-			DialogueBox->OnHideAnimationFinished.BindUObject(this, &UUIDialogueScene::FinalizeEndDialogue);
-			DialogueBox->Show(false);
-		}
-	}
+	FOnAnimationFinished OnHideFinished = FOnAnimationFinished::CreateUObject(this, &UUIDialogueScene::FinalizeEndDialogue);
+	HideAllDialogueBoxes(OnHideFinished);
 }
 
 void UUIDialogueScene::FinalizeEndDialogue()
@@ -109,12 +104,12 @@ void UUIDialogueScene::FinalizeEndDialogue()
 		}
 	}
 
-	// To-do: work out a system where we listen to delegates for all active dialogue boxes
-	if (!DialogueBoxes.IsEmpty())
-	{
-		UUIDialogueBox* DialogueBox = DialogueBoxes[0];
-		DialogueBox->OnHideAnimationFinished.Unbind();
-	}
+	//// To-do: work out a system where we listen to delegates for all active dialogue boxes
+	//if (!DialogueBoxes.IsEmpty())
+	//{
+	//	UUIDialogueBox* DialogueBox = DialogueBoxes[0];
+	//	DialogueBox->OnHideAnimationFinished.Unbind();
+	//}
 
 	if (ADSPlayerController* DSController = Cast<ADSPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
@@ -147,26 +142,26 @@ void UUIDialogueScene::CleanUpLastEvent()
 	ActiveDialogueBoxes.Empty();
 }
 
-bool UUIDialogueScene::ShowDialogueBox(UUIDialogueBox* DialogueBox, bool bForce)
+bool UUIDialogueScene::ShowDialogueBox(UUIDialogueBox* DialogueBox, const FOnAnimationFinished& OnShowFinished)
 {
 	if (DialogueBox)
 	{
-		if (bForce || !DialogueBox->GetIsShowing())
+		if (!DialogueBox->GetIsShowing())
 		{
-			DialogueBox->Show(true);
+			DialogueBox->Show(true, OnShowFinished);
 			return true;
 		}
 	}
 	return false;
 }
 
-bool UUIDialogueScene::HideDialogueBox(UUIDialogueBox* DialogueBox, bool bForce)
+bool UUIDialogueScene::HideDialogueBox(UUIDialogueBox* DialogueBox, const FOnAnimationFinished& OnHideFinished)
 {
 	if (DialogueBox)
 	{
-		if (bForce || DialogueBox->GetIsShowing())
+		if (DialogueBox->GetIsShowing())
 		{
-			DialogueBox->Show(false);
+			DialogueBox->Show(false, OnHideFinished);
 			return true;
 		}
 	}
@@ -184,11 +179,11 @@ void UUIDialogueScene::OnReadyToAdvance()
 	}
 }
 
-void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine)
+void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast)
 {
-	DialogueBox->OnShowAnimationFinished.Unbind();
+	//DialogueBox->OnShowAnimationFinished.Unbind();
 
-	AdvanceDialogueBox(DialogueBox, CurrentLine);
+	AdvanceDialogueBox(DialogueBox, CurrentLine, bIsLast);
 
 	bInProgress = true;
 	//bAutoAdvance = CurrentEvent.bAutoAdvance;
@@ -248,9 +243,9 @@ void UUIDialogueScene::HideAnimationFinished()
 //	GetWorld()->GetTimerManager().SetTimer(PauseTimerHandle, this, &UUIDialogueScene::OnReadyToAdvance, CurrentEvent.PauseTime);
 //}
 
-void UUIDialogueScene::AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine)
+void UUIDialogueScene::AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast)
 {
-	DialogueBox->PushLine(CurrentLine, false);
+	DialogueBox->PushLine(CurrentLine, bIsLast);
 	DialogueIdx++;
 }
 
@@ -259,12 +254,12 @@ void UUIDialogueScene::OnFastForwardDialogue(UUIDialogueBox* DialogueBox)
 	DialogueBox->FastForward();
 }
 
-bool UUIDialogueScene::HideAllDialogueBoxes(bool bForce)
+bool UUIDialogueScene::HideAllDialogueBoxes(const FOnAnimationFinished& OnHideFinished)
 {
 	bool bBoxHidden = false;
 	for (auto* DialogueBox : DialogueBoxes)
 	{
-		bBoxHidden |= HideDialogueBox(DialogueBox, false);
+		bBoxHidden |= HideDialogueBox(DialogueBox, OnHideFinished);
 	}
 	return bBoxHidden;
 }

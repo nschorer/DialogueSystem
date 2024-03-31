@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "UIDialogueBox.h"
 #include "UIDialogueScene.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDialogueSceneEvent);
@@ -56,17 +57,17 @@ protected:
 
 	void RegisterDialogueBoxes();
 
-	void AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine);
+	void AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast = false);
 
 	bool IsPreviousEventInProgress();
 	void TryFinishPreviousEvent();
 
 	void CleanUpLastEvent();
 
-	bool ShowDialogueBox(UUIDialogueBox* DialogueBox, bool bForce = false);
+	bool ShowDialogueBox(UUIDialogueBox* DialogueBox, const FOnAnimationFinished& OnShowFinished);
 
-	bool HideDialogueBox(UUIDialogueBox* DialogueBox, bool bForce = false);
-	bool HideAllDialogueBoxes(bool bForce = false);
+	bool HideDialogueBox(UUIDialogueBox* DialogueBox, const FOnAnimationFinished& OnHideFinished);
+	bool HideAllDialogueBoxes(const FOnAnimationFinished& OnHideFinished);
 
 	void CachePlayerControllerInBoxes(class ADSPlayerController* DSController);
 
@@ -77,7 +78,7 @@ protected:
 	void OnFastForwardDialogue(UUIDialogueBox* DialogueBox);
 
 	UFUNCTION()
-	void ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine);
+	void ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast = false);
 
 	UFUNCTION()
 	void HideAnimationFinished();
