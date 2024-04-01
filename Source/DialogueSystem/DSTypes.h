@@ -16,6 +16,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	FText Name;
 
+	// Make this soft
 	UPROPERTY(EditDefaultsOnly)
 	UTexture2D* Portrait;
 

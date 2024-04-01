@@ -199,7 +199,17 @@ void UUIDialogueBox::UpdateSpeaker(const UDSDialogueLineAsset* NewLine)
 	DialogueSpeakerText->SetVisibility(ESlateVisibility::HitTestInvisible);
 
 	// Move this to its own function
-	SpeakerImage->SetVisibility(ESlateVisibility::HitTestInvisible);
+	UTexture2D* SpeakerPortrait = NewLine->Speaker->Portrait;
+	if (SpeakerPortrait)
+	{
+		SpeakerImage->SetBrushFromTexture(SpeakerPortrait);
+		SpeakerImage->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
+	else
+	{
+		SpeakerImage->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	
 }
 
 void UUIDialogueBox::UpdateTextLine(const UDSDialogueLineAsset* NewLine)
