@@ -81,7 +81,7 @@ protected:
 	void ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast = false);
 
 	UFUNCTION()
-		void HideAnimationFinished();
+	void HideAnimationFinished();
 
 	void FinalizeEndDialogue();
 
@@ -95,6 +95,7 @@ protected:
 
 	int32 DialogueIdx;
 	bool bInProgress;
+	bool bAdvancing;
 
 	bool bAutoAdvance;
 

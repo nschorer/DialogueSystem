@@ -54,6 +54,12 @@ void UUIDialogueScene::AdvanceDialogue()
 		// Conflicts with TryFinishPreviousEvent?
 		CleanUpLastEvent();
 
+		if (bAdvancing)
+		{
+			return;
+		}
+		bAdvancing = true;
+
 		// No more events, end dialogue
 		if (!Events.IsValidIndex(DialogueIdx))
 		{
@@ -170,6 +176,15 @@ bool UUIDialogueScene::HideDialogueBox(UUIDialogueBox* DialogueBox, const FOnAni
 
 void UUIDialogueScene::OnReadyToAdvance()
 {
+	// Wait for all dialogue boxes to be ready
+	for (const UUIDialogueBox* ActiveBox : ActiveDialogueBoxes)
+	{
+		if (!ActiveBox->IsDialogueReady())
+		{
+			return;
+		}
+	}
+
 	bInProgress = false;
 	OnFastForwardDel.Unbind();
 
@@ -181,6 +196,21 @@ void UUIDialogueScene::OnReadyToAdvance()
 
 void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast)
 {
+	bool bAllBoxAnimationsDone = true;
+	for (const UUIDialogueBox* ActiveBox : ActiveDialogueBoxes)
+	{
+		if (ActiveBox->GetAnimationInProgress())
+		{
+			bAllBoxAnimationsDone = false;
+			break;
+		}
+	}
+
+	if (bAllBoxAnimationsDone)
+	{
+		bAdvancing = false;
+	}
+
 	//DialogueBox->OnShowAnimationFinished.Unbind();
 
 	bInProgress = true;

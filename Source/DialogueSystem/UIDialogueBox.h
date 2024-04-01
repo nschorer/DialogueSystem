@@ -41,6 +41,9 @@ public:
 	UFUNCTION()
 	bool GetIsShowing() const {return bIsShowing;}
 
+	UFUNCTION()
+	bool GetAnimationInProgress() const {return bAnimationInProgress;}
+
 	//UFUNCTION()
 	void Show(bool bShow, const FOnAnimationFinished& OnAnimationFinished);
 
@@ -68,7 +71,7 @@ protected:
 	void CancelInProgressEvents();
 
 	UFUNCTION(BlueprintCallable)
-		void SetReadyForNextLine();
+	void SetReadyForNextLine();
 
 // Child Widgets
 protected:
