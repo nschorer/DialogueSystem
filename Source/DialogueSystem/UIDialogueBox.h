@@ -36,6 +36,9 @@ public:
 	void StopVoice();
 
 	UFUNCTION(BlueprintCallable)
+	void PlayContinueOrEndNoise(bool bIsEnd);
+
+	UFUNCTION(BlueprintCallable)
 	bool IsDialogueReady() const {return bDialogueReady;}
 
 	UFUNCTION()
@@ -114,6 +117,12 @@ protected:
 	float CachedLastDynamicDelay;
 
 	float GetTypeOutDelay();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue Box|Continue Or End")
+	class USoundBase* ContinueNoise;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue Box|Continue Or End")
+	class USoundBase* EndNoise;
 
 // Events
 public:

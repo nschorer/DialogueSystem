@@ -99,6 +99,16 @@ void UUIDialogueBox::StopVoice()
 	}
 }
 
+void UUIDialogueBox::PlayContinueOrEndNoise(bool bIsEnd)
+{
+	if (ADSDialogueAudio* DialogueAudio = UDSFunctionLibrary::GetDialogueAudio(CachedController)) // probably bad
+	{
+		USoundBase* SoundToPlay = bIsEnd ? EndNoise : ContinueNoise;
+		DialogueAudio->StopVoiceLine(SoundToPlay);
+		DialogueAudio->PlayVoiceLine(SoundToPlay);
+	}
+}
+
 void UUIDialogueBox::Show(bool bShow, const FOnAnimationFinished& OnAnimationFinished)
 {
 	bAnimationInProgress = true;

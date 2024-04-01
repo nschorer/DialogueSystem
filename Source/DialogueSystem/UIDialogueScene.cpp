@@ -144,6 +144,7 @@ void UUIDialogueScene::CleanUpLastEvent()
 	{
 		ActiveDialogueBox->FastForward();
 		ActiveDialogueBox->StopVoice();
+		ActiveDialogueBox->PlayContinueOrEndNoise(DialogueIdx >= DialogueData->DialogueEvents.Num() - 1);
 	}
 	ActiveDialogueBoxes.Empty();
 }
