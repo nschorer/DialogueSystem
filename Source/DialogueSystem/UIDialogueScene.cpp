@@ -183,9 +183,11 @@ void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDia
 {
 	//DialogueBox->OnShowAnimationFinished.Unbind();
 
+	bInProgress = true;
+	OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
+
 	AdvanceDialogueBox(DialogueBox, CurrentLine, bIsLast);
 
-	bInProgress = true;
 	//bAutoAdvance = CurrentEvent.bAutoAdvance;
 	/*if (CurrentEvent.bCanFastForward)
 	{
@@ -195,53 +197,13 @@ void UUIDialogueScene::ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDia
 	{
 		OnFastForwardDel.Unbind();
 	}*/
-	OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
+	
 }
 
 void UUIDialogueScene::HideAnimationFinished()
 {
 
 }
-
-
-
-//void UUIDialogueScene::SingleSpeaker(FDialogueEvent& CurrentEvent)
-//{
-//	UUIDialogueBox* DialogueBox = nullptr;// GetDialogueBox(CurrentEvent.EBox);
-//	if (!DialogueBox) return;
-//	
-//	CurrentEventDialogueBox = DialogueBox;
-//
-//	DialogueBox->OnShowAnimationFinished.BindUObject(this, &UUIDialogueScene::ShowAnimationFinished, DialogueBox, CurrentEvent);
-//	if (!ShowDialogueBox(DialogueBox))
-//	{
-//		// It was already showing
-//		ShowAnimationFinished(DialogueBox, CurrentEvent);
-//	}
-//
-//	/*AdvanceDialogueBox(DialogueBox, CurrentEvent);
-//
-//	bInProgress = true;
-//	bAutoAdvance = CurrentEvent.bAutoAdvance;
-//	if (CurrentEvent.bCanFastForward)
-//	{
-//		OnFastForwardDel.BindUObject(this, &UUIDialogueScene::OnFastForwardDialogue, DialogueBox);
-//	}
-//	else
-//	{
-//		OnFastForwardDel.Unbind();
-//	}*/
-//}
-
-//void UUIDialogueScene::Pause(FDialogueEvent& CurrentEvent)
-//{
-//	HideAllDialogueBoxes();
-//	DialogueIdx++;
-//
-//	bInProgress = true;
-//	bAutoAdvance = true;
-//	GetWorld()->GetTimerManager().SetTimer(PauseTimerHandle, this, &UUIDialogueScene::OnReadyToAdvance, CurrentEvent.PauseTime);
-//}
 
 void UUIDialogueScene::AdvanceDialogueBox(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast)
 {

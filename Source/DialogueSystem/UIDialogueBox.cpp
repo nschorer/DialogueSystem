@@ -78,11 +78,14 @@ void UUIDialogueBox::PushLine(const UDSDialogueLineAsset* Line, bool bIsLastEven
 
 void UUIDialogueBox::FastForward()
 {
-	FString DisplayStr = TypedOutString;
-	CachedTag.Empty();
-	DisplayStr.AppendChar(TEXT(' ')); // Adding a space at the end prevents weird UMG string wrapping early
-	DialogueBodyText->SetText(FText::FromString(DisplayStr));
-	SetReadyForNextLine();
+	if (!bAnimationInProgress)
+	{
+		FString DisplayStr = TypedOutString;
+		CachedTag.Empty();
+		DisplayStr.AppendChar(TEXT(' ')); // Adding a space at the end prevents weird UMG string wrapping early
+		DialogueBodyText->SetText(FText::FromString(DisplayStr));
+		SetReadyForNextLine();
+	}
 }
 
 void UUIDialogueBox::StopVoice()
@@ -98,6 +101,7 @@ void UUIDialogueBox::StopVoice()
 
 void UUIDialogueBox::Show(bool bShow, const FOnAnimationFinished& OnAnimationFinished)
 {
+	bAnimationInProgress = true;
 	OnShowHideAnimFinished = OnAnimationFinished;
 	if (bShow)
 	{
@@ -150,6 +154,7 @@ void UUIDialogueBox::Show(bool bShow, const FOnAnimationFinished& OnAnimationFin
 
 void UUIDialogueBox::OnShowFinished()
 {
+	bAnimationInProgress = false;
 	UnbindAllFromAnimationFinished(AnimShow);
 	OnShowHideAnimFinished.ExecuteIfBound();
 	OnShowHideAnimFinished.Unbind();
@@ -158,6 +163,7 @@ void UUIDialogueBox::OnShowFinished()
 void UUIDialogueBox::OnReverseShowFinished()
 {
 	bIsShowing = false;
+	bAnimationInProgress = false;
 
 	SetVisibility(ESlateVisibility::Collapsed);
 	UnbindAllFromAnimationFinished(AnimShow);
@@ -168,6 +174,7 @@ void UUIDialogueBox::OnReverseShowFinished()
 void UUIDialogueBox::OnHideFinished()
 {
 	bIsShowing = false;
+	bAnimationInProgress = false;
 
 	SetVisibility(ESlateVisibility::Collapsed);
 	UnbindAllFromAnimationFinished(AnimHide);
@@ -187,16 +194,14 @@ void UUIDialogueBox::UpdateSpeaker(const UDSDialogueLineAsset* NewLine)
 
 void UUIDialogueBox::UpdateTextLine(const UDSDialogueLineAsset* NewLine)
 {
+	TypedOutString = NewLine->TextLine.ToString();
+	DialogueBodyText->SetVisibility(ESlateVisibility::HitTestInvisible);
 	if (bTypeOutText)
 	{
 		TypeOutTextIdx = 0;
-		GetWorld()->GetTimerManager().SetTimer(TypeOutTextHandle, this, &UUIDialogueBox::TypeOutChar, GetTypeOutDelay());
 		DialogueBodyText->SetText(FText());
-		DialogueBodyText->SetVisibility(ESlateVisibility::HitTestInvisible);
-		TypeOutTextIdx = 0;
-		TypedOutString = NewLine->TextLine.ToString();
-
 		bDialogueReady = false;
+		GetWorld()->GetTimerManager().SetTimer(TypeOutTextHandle, this, &UUIDialogueBox::TypeOutChar, GetTypeOutDelay());
 	}
 	else
 	{

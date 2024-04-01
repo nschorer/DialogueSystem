@@ -81,7 +81,7 @@ protected:
 	void ShowAnimationFinished(UUIDialogueBox* DialogueBox, UDSDialogueLineAsset* CurrentLine, bool bIsLast = false);
 
 	UFUNCTION()
-	void HideAnimationFinished();
+		void HideAnimationFinished();
 
 	void FinalizeEndDialogue();
 

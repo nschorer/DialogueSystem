@@ -96,13 +96,13 @@ protected:
 
 // Configurable Variables
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dialogue Box|TypeOut")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue Box|TypeOut")
 	bool bTypeOutText = false;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Dialogue Box|TypeOut|Settings", meta = (ClampMin = 0.01, UIMin = 0.01, EditCondition = bTypeOutText, EditConditionHides))
+	UPROPERTY(EditAnywhere, Category = "Dialogue Box|TypeOut|Settings", meta = (ClampMin = 0.01, UIMin = 0.01, EditCondition = bTypeOutText, EditConditionHides))
 	float FlatTypeOutDelay = 0.2f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Dialogue Box|TypeOut|Settings", meta = (EditCondition = bTypeOutText, EditConditionHides))
+	UPROPERTY(EditAnywhere, Category = "Dialogue Box|TypeOut|Settings", meta = (EditCondition = bTypeOutText, EditConditionHides))
 	class UCurveFloat* DynamicTypeOutDelay;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dialog Box|Animation")
@@ -117,7 +117,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnDialogueReady OnDialogueReady;
 
+protected:
 	FOnAnimationFinished OnShowHideAnimFinished;
+	bool bAnimationInProgress;
 
 // Properties
 protected:
